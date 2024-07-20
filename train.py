@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-#import randomcond
 import sys
 
 import numpy as np
@@ -23,21 +22,19 @@ from unet import UNet
 from utils.data_loading import BasicDataset, CarvanaDataset
 from utils.dice_score import dice_loss
 
-dir_img = Path('./data/images')
-dir_mask = Path('./data/masks')
+dir_img = Path('../data/images')
+dir_mask = Path('../data/masks')
 dir_checkpoint = Path('./checkpoints/')
 
-RANDOM_SEED = 42
 
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False    #False ensure the result is the same
-
+random.seed(42)
+os.environ['PYTHONHASHSEED']=str(42)
+np.random.seed(42)
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+torch.cuda.manual_seed_all(42)
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 
 
 def train_model(
@@ -63,7 +60,7 @@ def train_model(
     # 2. Split into train / validation partitions
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
-    train_set, val_set = random_split(dataset, [n_train, n_val])
+    train_set, val_set = random_split(dataset, [n_train, n_val], generator=torch.Generator().manual_seed(42))
 
     # 3. Create data loaders
     loader_args = dict(batch_size=batch_size, num_workers=os.cpu_count(), pin_memory=True)
@@ -190,7 +187,7 @@ def train_model(
 
 def get_args():
     parser = argparse.ArgumentParser(description='Train the UNet on images and target images')
-    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=50, help='Number of epochs')
+    parser.add_argument('--epochs', '-e', metavar='E', type=int, default=2, help='Number of epochs')
     parser.add_argument('--batch-size', '-b', dest='batch_size', metavar='B', type=int, default=4, help='Batch size')
     parser.add_argument('--learning-rate', '-l', metavar='LR', type=float, default=0.00001,
                         help='Learning rate', dest='lr')
@@ -204,27 +201,7 @@ def get_args():
 
     return parser.parse_args()
 
-def plot_and_save_loss_curve(train_losses, output_path='loss_curve.png'):
-    """
-    Plots and saves the loss curve.
-
-    Args:
-        train_losses (list of float): List of loss values recorded during training.
-        output_path (str): Path to save the loss curve image.
-    """
-    plt.figure()
-    plt.plot(range(1, len(train_losses) + 1), train_losses, label='Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training Loss Curve')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(output_path)
-    plt.close()
-
-if __name__ == '__main__':
-    torch.manual_seed(RANDOM_SEED)
-
+if __name__=='__main__':
     args = get_args()
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
