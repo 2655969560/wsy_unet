@@ -1,0 +1,13 @@
+*.pyc
+data/
+res/
+res2/
+result_20240715/
+__pycache__/
+checkpoints/
+*.pth
+*.jpg
+*.bmp
+venv/
+.idea/
+wandb/
